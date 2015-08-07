@@ -84,6 +84,7 @@ catkin_package(
   gazebo_ros_utils 
   gazebo_ros_camera_utils 
   gazebo_ros_camera 
+  gazebo_ros_mimic_joint
   gazebo_ros_multicamera 
   gazebo_ros_depth_camera 
   gazebo_ros_openni_kinect 
@@ -259,6 +260,8 @@ target_link_libraries(gazebo_ros_hand_of_god ${GAZEBO_LIBRARIES} ${SDFormat_LIBR
 add_library(gazebo_ros_ft_sensor src/gazebo_ros_ft_sensor.cpp)
 target_link_libraries(gazebo_ros_ft_sensor ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_library(gazebo_ros_mimic_joint src/gazebo_ros_mimic_joint.cpp)
+target_link_libraries(gazebo_ros_mimic_joint ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 ##
 ## Add your new plugin here
 ##
@@ -274,6 +277,7 @@ install(TARGETS
   gazebo_ros_utils
   gazebo_ros_camera_utils
   gazebo_ros_camera
+  gazebo_ros_mimic_joint
   gazebo_ros_multicamera
   MultiCameraPlugin
   gazebo_ros_depth_camera
