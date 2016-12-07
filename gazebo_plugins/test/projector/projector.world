@@ -1,0 +1,144 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+  <!--
+    cd ~/catkin_ws/src/gazebo_ros_pkgs/gazebo_plugins/test/projector
+    GAZEBO_RESOURCE_PATH=`pwd` roslaunch gazebo_plugins projector.test gui:=true
+    rostopic pub /projector_plugin/projector std_msgs/Int32 "data: 0"
+    rostopic pub /projector_plugin/projector std_msgs/Int32 "data: 1"
+    -->
+  <world name="default">
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Focus camera on tall pendulum -->
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>4.927360 -4.376610 3.740080 0.000000 0.275643 2.356190</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+
+  <model name="model_1">
+    <static>false</static>
+    <pose>2.0 0.0 4.0 0.0 0.0 0.0</pose>
+    <link name="link_1">
+      <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+      <inertial>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+        <mass>10.0</mass>
+      </inertial>
+      <visual name="visual_sphere">
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <geometry>
+          <sphere>
+            <radius>0.5</radius>
+          </sphere>
+        </geometry>
+        <material>
+          <ambient>0.03 0.5 0.5 1.0</ambient>
+          <script>Gazebo/Green</script>
+        </material>
+        <cast_shadows>true</cast_shadows>
+        <laser_retro>100.0</laser_retro>
+      </visual>
+      <collision name="collision_sphere">
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <max_contacts>250</max_contacts>
+        <geometry>
+          <sphere>
+            <radius>0.5</radius>
+          </sphere>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.5</mu>
+              <mu2>0.2</mu2>
+              <fdir1>1.0 0 0</fdir1>
+              <slip1>0</slip1>
+              <slip2>0</slip2>
+            </ode>
+          </friction>
+          <bounce>
+            <restitution_coefficient>0</restitution_coefficient>
+            <threshold>1000000.0</threshold>
+          </bounce>
+          <contact>
+            <ode>
+              <soft_cfm>0</soft_cfm>
+              <soft_erp>0.2</soft_erp>
+              <kp>1e15</kp>
+              <kd>1e13</kd>
+              <max_vel>100.0</max_vel>
+              <min_depth>0.0001</min_depth>
+            </ode>
+          </contact>
+        </surface>
+        <laser_retro>100.0</laser_retro>
+      </collision>
+    </link>
+  </model>
+
+  <model name="projector_model">
+    <static>true</static>
+    <pose>0.0 0.0 0.5 0.0 0.0 0.0</pose>
+    <link name="projector_link">
+      <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+      <projector name="projector_plugin_test">
+        <pose>0 0 0 0 0 0</pose>
+        <texture>checker.png</texture>
+        <fov>1.4</fov>
+        <near_clip>0.1</near_clip>
+        <far_clip>6</far_clip>
+      </projector>
+    </link>
+      <plugin name="projector_plugin" filename="libgazebo_ros_projector.so">
+        <projector>projector_link/projector_plugin_test</projector>
+        <alwaysOn>false</alwaysOn>
+        <updateRate>15.0</updateRate>
+        <textureName>checker.png</textureName>
+        <textureTopicName>projector_plugin/image</textureTopicName>
+        <projectorTopicName>projector_plugin/projector</projectorTopicName>
+      </plugin>
+  </model>
+
+
+  <model name="projector_model2">
+    <static>true</static>
+    <pose>0.25 0.0 0.5 0.0 0.0 0.0</pose>
+    <link name="projector_link2">
+      <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+      <projector name="projector_plugin_test2">
+        <pose>0 0 0 0 0 0</pose>
+        <texture>checker.png</texture>
+        <fov>1.4</fov>
+        <near_clip>0.1</near_clip>
+        <far_clip>6</far_clip>
+      </projector>
+    </link>
+      <plugin name="projector_plugin2" filename="libgazebo_ros_projector.so">
+        <projector>projector_link2/projector_plugin_test2</projector>
+        <alwaysOn>false</alwaysOn>
+        <updateRate>15.0</updateRate>
+        <textureName>checker.png</textureName>
+        <textureTopicName>projector_plugin2/image</textureTopicName>
+        <projectorTopicName>projector_plugin2/projector</projectorTopicName>
+      </plugin>
+  </model>
+
+  </world>
+</sdf>

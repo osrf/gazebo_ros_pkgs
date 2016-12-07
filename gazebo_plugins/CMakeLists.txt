@@ -369,4 +369,6 @@ if (CATKIN_ENABLE_TESTING)
                     test/set_model_state_test/set_model_state_test.cpp)
   add_rostest(test/range/range_plugin.test)
   target_link_libraries(set_model_state-test ${catkin_LIBRARIES})
+
+  add_rostest(test/projector/projector.test)
 endif()
