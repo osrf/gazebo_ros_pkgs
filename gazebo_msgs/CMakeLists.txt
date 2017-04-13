@@ -15,6 +15,7 @@ add_message_files(
   FILES
   ContactsState.msg
   ContactState.msg
+  JointStates.msg
   LinkState.msg
   LinkStates.msg
   ModelState.msg
@@ -25,6 +26,9 @@ add_message_files(
   )
 
 add_service_files(DIRECTORY srv FILES
+  AddForceSensor.srv
+  AddJoint.srv
+  AddTorqueSensor.srv
   ApplyBodyWrench.srv
   DeleteModel.srv
   GetLinkState.srv
@@ -32,6 +36,7 @@ add_service_files(DIRECTORY srv FILES
   SetJointProperties.srv
   SetModelConfiguration.srv
   SpawnModel.srv
+  StartTimer.srv
   ApplyJointEffort.srv
   GetJointProperties.srv
   GetModelProperties.srv
