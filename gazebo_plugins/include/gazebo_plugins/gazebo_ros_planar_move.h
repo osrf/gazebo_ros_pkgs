@@ -89,8 +89,52 @@ namespace gazebo {
       double y_;
       double rot_;
       bool alive_;
+      double recover_roll_velocity_p_gain_;
+      double recover_pitch_velocity_p_gain_;
+      double recover_z_velocity_p_gain_;
+      double x_velocity_limit_max_;
+      double x_velocity_limit_min_;
+      double y_velocity_limit_max_;
+      double y_velocity_limit_min_;
+      double rot_velocity_limit_max_;
+      double rot_velocity_limit_min_;
+      double x_acceleration_limit_max_;
+      double x_acceleration_limit_min_;
+      double y_acceleration_limit_max_;
+      double y_acceleration_limit_min_;
+      double rot_acceleration_limit_max_;
+      double rot_acceleration_limit_min_;
+      double joint_state_idel_sec_;
+
+      common::Time last_time_;
+      common::Time last_cmd_subscribe_time_;
       common::Time last_odom_publish_time_;
       math::Pose last_odom_pose_;
+      math::Vector3 linear_cmd_;
+      math::Vector3 angular_cmd_;
+      math::Vector3 last_linear_cmd_;
+      math::Vector3 last_angular_cmd_;
+
+     //
+     gazebo::physics::RayShapePtr rayShape_;
+     //
+     void GetNearestEntityBelow(physics::EntityPtr _fromEntity,
+                                double &_distBelow,
+                                std::string &_entityName)
+     {
+       gazebo::physics::EntityPtr entityBelow = _fromEntity;
+       math::Vector3 start = _fromEntity->GetWorldPose().pos;
+       math::Vector3 end = start;
+       while ( entityBelow && ( entityBelow->GetParentModel() == _fromEntity->GetParentModel() ) ) {
+         end.z -= 1000;
+         rayShape_->SetPoints(start, end); // Set the ray based on starting and ending points relative to the body.
+         rayShape_->GetIntersection(_distBelow, _entityName);
+         entityBelow = parent_->GetWorld()->GetEntity(_entityName);
+         start.z -= (_distBelow + 0.00001);
+       }
+       _distBelow += 0.00001;
+       //std::cerr << " +_entityName " << _entityName << ", dist = " << _distBelow << ", start " << start.z << ", end " << end.z << std::endl;
+    }
 
   };
 
