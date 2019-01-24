@@ -23,6 +23,7 @@
 #include <gazebo/common/Events.hh>
 #include <gazebo/gazebo_config.h>
 #include <gazebo_ros/gazebo_ros_api_plugin.h>
+#include <std_msgs/builtin_float.h>
 
 namespace gazebo
 {
@@ -34,7 +35,9 @@ GazeboRosApiPlugin::GazeboRosApiPlugin() :
   plugin_loaded_(false),
   pub_link_states_connection_count_(0),
   pub_model_states_connection_count_(0),
-  pub_clock_frequency_(0)
+  pub_clock_frequency_(0),
+  real_times_(20),
+  sim_times_(20)
 {
   robot_namespace_.clear();
 }
@@ -58,6 +61,7 @@ GazeboRosApiPlugin::~GazeboRosApiPlugin()
   load_gazebo_ros_api_plugin_event_.reset();
   wrench_update_event_.reset();
   force_update_event_.reset();
+  rtf_update_event_.reset();
   time_update_event_.reset();
   ROS_DEBUG_STREAM_NAMED("api_plugin","Slots disconnected");
 
@@ -199,6 +203,7 @@ void GazeboRosApiPlugin::loadGazeboRosApiPlugin(std::string world_name)
   wrench_update_event_ = gazebo::event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboRosApiPlugin::wrenchBodySchedulerSlot,this));
   force_update_event_  = gazebo::event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboRosApiPlugin::forceJointSchedulerSlot,this));
   time_update_event_   = gazebo::event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboRosApiPlugin::publishSimTime,this));
+  rtf_update_event_    = gazebo::event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboRosApiPlugin::publishRealTimeFactor,this));
 }
 
 void GazeboRosApiPlugin::onResponse(ConstResponsePtr &response)
@@ -219,6 +224,9 @@ void GazeboRosApiPlugin::advertiseServices()
 {
   // publish clock for simulated ros time
   pub_clock_ = nh_->advertise<rosgraph_msgs::Clock>("/clock",10);
+
+  // publish real-time factor
+  pub_real_time_factor_ = nh_->advertise<std_msgs::Float32>("/sim_real_time_factor", 1);
 
   // Advertise spawn services on the custom queue
   std::string spawn_sdf_model_service_name("spawn_sdf_model");
@@ -2108,6 +2116,39 @@ void GazeboRosApiPlugin::publishSimTime()
   //  publish time to ros
   last_pub_clock_time_ = sim_time;
   pub_clock_.publish(ros_time_);
+}
+
+void GazeboRosApiPlugin::publishRealTimeFactor()
+{
+  // Note that this based on the native Gazebo method found here:
+  // https://bitbucket.org/osrf/gazebo/src/a24b331f8ebfd712a226ba73b7f43d2d4c14fe15/tools/gz.cc?at=gazebo7&fileviewer=file-view-default#gz.cc-854
+  // The goal is to make the real-time factor available in ROS bags, for use as an easy "system performance" metric
+  // with post-run analysis.
+#if GAZEBO_MAJOR_VERSION >= 8
+  sim_times_.push_back(world_->SimTime());
+  real_times_.push_back(world_->RealTime());
+#else
+  sim_times_.push_back(world_->GetSimTime());
+  real_times_.push_back(world_->GetRealTime());
+#endif
+
+  auto ss_lambda = [&](common::Time& a, common::Time& b){
+    return a + (b - sim_times_.front());
+  };
+  common::Time sim_sum = std::accumulate(++sim_times_.begin(), sim_times_.end(), common::Time(0), ss_lambda);
+
+  auto rs_lambda = [&](common::Time& a, common::Time& b){
+    return a + (b - real_times_.front());
+  };
+  common::Time real_sum = std::accumulate(++real_times_.begin(), real_times_.end(), common::Time(0), rs_lambda);
+
+  // Prevent divide by zero
+  if (real_sum.Double() <= 0)
+    return;
+
+  double rtf = (sim_sum / real_sum).Double();
+
+  pub_real_time_factor_.publish(static_cast<float>(rtf));
 }
 
 void GazeboRosApiPlugin::publishLinkStates()
