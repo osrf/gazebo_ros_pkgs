@@ -73,46 +73,33 @@ void MultiCameraPlugin::Load(sensors::SensorPtr _sensor,
     std::string cameraName = this->parentSensor->Camera(i)->Name();
     // gzdbg << "camera(" << i << ") name [" << cameraName << "]\n";
 
-    // FIXME: hardcoded 2 camera support only
-    if (cameraName.find("left") != std::string::npos)
-    {
-      this->newFrameConnection.push_back(this->camera[i]->ConnectNewImageFrame(
-        boost::bind(&MultiCameraPlugin::OnNewFrameLeft,
-        this, _1, _2, _3, _4, _5)));
+    if ( this->parentSensor->CameraCount() <= 2 ) {
+      if (cameraName.find("left") == std::string::npos &&
+          cameraName.find("right") == std::string::npos   ) {
+        // legacy: if only two cameras, must have "left" or "right"
+        //  in name to be added; otherwise ignored
+        continue;
+      }
     }
-    else if (cameraName.find("right") != std::string::npos)
-    {
-      this->newFrameConnection.push_back(this->camera[i]->ConnectNewImageFrame(
-        boost::bind(&MultiCameraPlugin::OnNewFrameRight,
-        this, _1, _2, _3, _4, _5)));
-    }
+    
+    ROS_INFO_NAMED("MultiCameraPlugin", "%s loaded with index %d",
+                   cameraName.c_str(), i);
+    
+    this->newFrameConnection.push_back
+      (this->camera[i]->ConnectNewImageFrame
+       (boost::bind(&MultiCameraPlugin::OnNewFrame,
+                    this, i, _1, _2, _3, _4, _5)));
   }
 
   this->parentSensor->SetActive(true);
 }
 
 /////////////////////////////////////////////////
-void MultiCameraPlugin::OnNewFrameLeft(const unsigned char * /*_image*/,
-                              unsigned int /*_width*/,
-                              unsigned int /*_height*/,
-                              unsigned int /*_depth*/,
-                              const std::string &/*_format*/)
+void MultiCameraPlugin::OnNewFrame(const unsigned int camNumber,
+                                   const unsigned char * /*_image*/,
+                                   unsigned int /*_width*/,
+                                   unsigned int /*_height*/,
+                                   unsigned int /*_depth*/,
+                                   const std::string &/*_format*/)
 {
-  /*rendering::Camera::SaveFrame(_image, this->width,
-    this->height, this->depth, this->format,
-    "/tmp/camera/me.jpg");
-    */
-}
-
-/////////////////////////////////////////////////
-void MultiCameraPlugin::OnNewFrameRight(const unsigned char * /*_image*/,
-                              unsigned int /*_width*/,
-                              unsigned int /*_height*/,
-                              unsigned int /*_depth*/,
-                              const std::string &/*_format*/)
-{
-  /*rendering::Camera::SaveFrame(_image, this->width,
-    this->height, this->depth, this->format,
-    "/tmp/camera/me.jpg");
-    */
 }
